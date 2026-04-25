@@ -8,32 +8,14 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-        
         :root { --bg: #090a0f; --card: rgba(255, 255, 255, 0.03); --border: rgba(255, 255, 255, 0.08); }
-        
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: #e5e7eb; }
-        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: #e5e7eb; overflow-x: hidden; }
         .glass { background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); }
-        .sidebar-active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
-        
-        /* Animations */
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.95) translateY(10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .animate-card { animation: fadeInScale 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        
-        /* Skeleton Shimmer */
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-        .skeleton {
-            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-
+        .sidebar-active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-left: 3px solid #3b82f6; }
+        .animate-card { animation: fadeIn 0.4s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .skeleton { background: linear-gradient(90deg, #16181d 25%, #1f2128 50%, #16181d 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
     </style>
@@ -42,191 +24,125 @@
 
     <div id="toast-container" class="fixed top-6 right-6 z-[100] flex flex-col gap-3"></div>
 
-    <aside class="w-72 glass h-full hidden md:flex flex-col p-6">
+    <aside class="w-72 glass h-full flex flex-col p-6">
         <div class="flex items-center gap-3 mb-10 px-2">
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/30">
                 <i data-lucide="folder-key" class="text-white w-6 h-6"></i>
             </div>
-            <h1 class="text-xl font-bold tracking-tight text-white">Forge Drive</h1>
+            <h1 class="text-xl font-bold text-white">Forge Drive</h1>
         </div>
         
         <nav class="space-y-2 flex-1">
-            <button onclick="setCategory('all', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 transition sidebar-active">
-                <i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard
+            <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mb-2">Dashboard</p>
+            <button onclick="setCategory('all', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 transition sidebar-active nav-active">
+                <i data-lucide="layout-grid" class="w-5 h-5"></i> All Files
             </button>
+            
+            <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mt-8 mb-2">Categories</p>
             <button onclick="setCategory('video', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition">
                 <i data-lucide="play" class="w-5 h-5"></i> Family Media
             </button>
-            <button onclick="setCategory('document', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition">
-                <i data-lucide="file-text" class="w-5 h-5"></i> Shared Files
+            <button onclick="setCategory('image', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition">
+                <i data-lucide="image" class="w-5 h-5"></i> Images
             </button>
-
-            <div class="mt-10 pt-6 border-t border-white/5">
-                <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mb-4">Recent Activity</p>
-                <div id="history-list" class="space-y-4 px-4"></div>
-            </div>
+            <button onclick="setCategory('document', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition">
+                <i data-lucide="file-text" class="w-5 h-5"></i> Documents
+            </button>
         </nav>
-
-        <div class="glass p-4 rounded-2xl mt-auto">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold">AK</div>
-                <div class="text-[11px]">
-                    <p class="text-white font-medium">Anil Kumar</p>
-                    <p class="text-gray-500">Family Admin</p>
-                </div>
-            </div>
-        </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0">
+    <main class="flex-1 flex flex-col">
         <header class="h-24 flex items-center justify-between px-10">
-            <h2 id="view-title" class="text-2xl font-bold text-white">Shared Files</h2>
-            <div class="flex items-center gap-4">
-                <button onclick="openUrlModal()" class="text-gray-400 hover:text-white flex items-center gap-2 text-sm px-4 py-2 rounded-xl border border-white/5 hover:bg-white/5 transition">
-                    <i data-lucide="link" class="w-4 h-4"></i> URL Upload
-                </button>
+            <h2 id="view-title" class="text-2xl font-bold text-white">All Files</h2>
+            <div class="flex gap-4">
+                <button onclick="openUrlModal()" class="px-4 py-2 rounded-xl text-sm text-gray-400 border border-white/5 hover:bg-white/5 transition">URL Upload</button>
                 <input type="file" id="file-upload" class="hidden" onchange="handleUpload()">
-                <button onclick="document.getElementById('file-upload').click()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold text-white transition shadow-lg shadow-blue-600/20">
-                    <i data-lucide="plus" class="w-4 h-4"></i> Upload File
-                </button>
+                <button onclick="document.getElementById('file-upload').click()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition">+ Upload File</button>
             </div>
         </header>
 
         <section class="flex-1 overflow-y-auto p-10 pt-2 custom-scrollbar">
-            <div id="file-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-                </div>
+            <div id="file-grid" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6"></div>
         </section>
     </main>
 
     <div id="url-modal" class="fixed inset-0 z-[150] flex items-center justify-center hidden p-6">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="closeUrlModal()"></div>
-        <div class="glass w-full max-w-md p-8 rounded-[2.5rem] relative animate-card border border-white/10 shadow-2xl">
-            <h3 class="text-xl font-bold mb-2">Remote Side-load</h3>
-            <p class="text-gray-500 text-sm mb-6">Enter a direct download link to save it to your drive.</p>
-            
-            <input type="text" id="remote-url-input" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-4 outline-none focus:border-blue-500 transition" placeholder="https://example.com/file.mp4">
-            <input type="text" id="remote-name-input" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-6 outline-none focus:border-blue-500 transition" placeholder="Filename (e.g. video.mp4)">
-            
-            <div class="flex gap-3">
-                <button onclick="closeUrlModal()" class="flex-1 py-4 rounded-2xl text-gray-400 font-bold hover:bg-white/5 transition">Cancel</button>
-                <button onclick="submitUrlUpload()" class="flex-1 bg-blue-600 py-4 rounded-2xl text-white font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">OK</button>
-            </div>
+        <div class="glass w-full max-w-md p-8 rounded-[2.5rem] relative animate-card border border-white/10">
+            <h3 class="text-xl font-bold mb-6">Remote Side-load</h3>
+            <input type="text" id="remote-url-input" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-4 outline-none" placeholder="Direct link...">
+            <input type="text" id="remote-name-input" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-6 outline-none" placeholder="Filename...">
+            <button onclick="submitUrlUpload()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold">OK</button>
         </div>
     </div>
 
-    <div id="auth-screen" class="fixed inset-0 z-[200] bg-[#090a0f] flex items-center justify-center hidden">
-        <div class="glass p-12 rounded-[3rem] text-center max-w-sm w-full border border-white/10">
-            <div class="w-20 h-20 bg-blue-600/20 rounded-3xl flex items-center justify-center mx-auto mb-8"><i data-lucide="lock" class="text-blue-500 w-10 h-10"></i></div>
-            <h2 class="text-2xl font-bold mb-8">Enter Secret Key</h2>
-            <input type="password" id="auth-input" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-4 text-center outline-none focus:border-blue-500" placeholder="••••••••">
-            <button onclick="authenticate()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg">Enter Cloud</button>
-        </div>
+    <div id="detail-view" class="fixed inset-0 z-[100] glass hidden flex flex-col p-12">
+        <button onclick="closeDetail()" class="text-gray-400 mb-8">← Back</button>
+        <div id="preview-area" class="flex-1 flex justify-center items-center"></div>
+        <div id="detail-actions" class="text-center mt-8"></div>
     </div>
 
     <script>
-        const workerUrl = 'https://vicksgoli.visdrive.workers.dev'; 
+        const workerUrl = 'https://vicksgoli.visdrive.workers.dev';
         let allFiles = [];
         let currentFilter = 'all';
+        const extMap = { video: ['mp4', 'mkv', 'webm', 'mov'], image: ['jpg', 'jpeg', 'png', 'gif', 'svg'], document: ['pdf', 'doc', 'docx', 'txt', 'zip'] };
 
-        function formatSize(bytes) {
-            if (bytes === 0) return '0.00 MB';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
-        }
-
-        // --- Skeleton State ---
-        function renderSkeletons() {
-            const grid = document.getElementById('file-grid');
-            grid.innerHTML = Array(10).fill(0).map(() => `
-                <div class="glass p-8 rounded-[2.5rem] border-transparent">
-                    <div class="aspect-square w-full rounded-2xl skeleton mb-6"></div>
-                    <div class="h-4 w-3/4 skeleton rounded mb-2"></div>
-                    <div class="h-3 w-1/4 skeleton rounded"></div>
-                </div>
-            `).join('');
+        function formatSize(b) {
+            const k = 1024, s = ['Bytes','KB','MB','GB'];
+            const i = Math.floor(Math.log(b)/Math.log(k));
+            return (b/Math.pow(k, i)).toFixed(2) + ' ' + s[i];
         }
 
         async function loadFiles() {
-            const secret = localStorage.getItem('forge_secret');
-            if (!secret) return document.getElementById('auth-screen').classList.remove('hidden');
-            
             renderSkeletons();
-            try {
-                const res = await fetch(`${workerUrl}/api/files`, { headers: {'Authorization': `Bearer ${secret}`} });
-                allFiles = await res.json();
-                setTimeout(render, 600); // Small delay so the animation feels premium
-            } catch (e) { console.error(e); }
-        }
-
-        function render() {
-            const grid = document.getElementById('file-grid');
-            const filtered = allFiles.filter(f => {
-                if (currentFilter === 'all') return true;
-                const ext = f.name.split('.').pop().toLowerCase();
-                const videoExts = ['mp4', 'mkv', 'webm', 'mov'];
-                return currentFilter === 'video' ? videoExts.includes(ext) : !videoExts.includes(ext);
-            });
-
-            grid.innerHTML = filtered.map((f, i) => `
-                <div onclick="openFile('${f.name}')" 
-                     class="glass group p-8 rounded-[2.5rem] cursor-pointer hover:bg-white/5 transition-all border-transparent hover:border-blue-500/30 animate-card"
-                     style="animation-delay: ${i * 0.05}s">
-                    <div class="aspect-square mb-6 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-105 transition-transform">
-                        <i data-lucide="file" class="w-12 h-12 text-gray-700 group-hover:text-blue-500 transition-colors"></i>
-                    </div>
-                    <p class="text-sm font-semibold truncate text-gray-200 mb-1">${f.name}</p>
-                    <p class="text-[10px] text-gray-600 font-bold uppercase">${formatSize(f.size)}</p>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        // --- Custom Modal Handlers ---
-        function openUrlModal() { document.getElementById('url-modal').classList.remove('hidden'); }
-        function closeUrlModal() { document.getElementById('url-modal').classList.add('hidden'); }
-
-        async function submitUrlUpload() {
-            const remoteUrl = document.getElementById('remote-url-input').value;
-            const fileName = document.getElementById('remote-name-input').value;
-            if (!remoteUrl || !fileName) return;
-
-            closeUrlModal();
-            toast("Starting remote side-load...");
-            const res = await fetch(`${workerUrl}/api/url-upload`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('forge_secret')}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ remoteUrl, fileName })
-            });
-
-            if (res.ok) { toast('Success!', 'success'); loadFiles(); }
-        }
-
-        function setCategory(cat, btn) {
-            currentFilter = cat;
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('sidebar-active', 'text-white'));
-            btn.classList.add('sidebar-active', 'text-white');
+            const res = await fetch(`${workerUrl}/api/files`, { headers: {'Authorization': `Bearer ${localStorage.getItem('forge_secret')}`} });
+            allFiles = await res.json();
             render();
         }
 
-        function toast(msg, type='info') {
-            const c = document.getElementById('toast-container');
-            const t = document.createElement('div');
-            t.className = `px-6 py-4 rounded-2xl glass border ${type==='success'?'border-blue-500/50 text-blue-400':'border-red-500/50 text-red-400'} animate-card`;
-            t.innerText = msg;
-            c.appendChild(t);
-            setTimeout(() => t.remove(), 4000);
+        function renderSkeletons() {
+            document.getElementById('file-grid').innerHTML = Array(5).fill(0).map(() => `<div class="glass p-8 rounded-[2.5rem]"><div class="aspect-square skeleton rounded-2xl mb-6"></div><div class="h-4 skeleton w-full rounded"></div></div>`).join('');
         }
 
-        function authenticate() { 
-            localStorage.setItem('forge_secret', document.getElementById('auth-input').value); 
-            document.getElementById('auth-screen').classList.add('hidden'); 
-            loadFiles(); 
+        function render(filter = currentFilter) {
+            currentFilter = filter;
+            const grid = document.getElementById('file-grid');
+            const files = filter === 'all' ? allFiles : allFiles.filter(f => {
+                const ext = f.name.split('.').pop().toLowerCase();
+                return extMap[filter].includes(ext);
+            });
+            grid.innerHTML = files.map((f, i) => `
+                <div onclick="openFile('${f.name}')" class="glass p-8 rounded-[2.5rem] cursor-pointer hover:border-blue-500/30 transition animate-card" style="animation-delay:${i*0.05}s">
+                    <div class="aspect-square mb-6 rounded-2xl bg-white/5 flex items-center justify-center"><i data-lucide="file" class="w-10 h-10 text-gray-700"></i></div>
+                    <p class="text-sm font-semibold truncate">${f.name}</p>
+                    <p class="text-[10px] text-gray-600 font-bold uppercase">${formatSize(f.size)}</p>
+                </div>`).join('');
+            lucide.createIcons();
         }
 
-        if (localStorage.getItem('forge_secret')) loadFiles();
-        else document.getElementById('auth-screen').classList.remove('hidden');
+        function openFile(name) {
+            const url = `${workerUrl}/api/download/${encodeURIComponent(name)}?secret=${localStorage.getItem('forge_secret')}`;
+            const area = document.getElementById('preview-area');
+            area.innerHTML = name.match(/\.(mp4|webm)$/i) ? `<video src="${url}" controls class="max-h-[70vh] rounded-2xl"></video>` : `<i data-lucide="file" class="w-32 h-32"></i>`;
+            document.getElementById('detail-actions').innerHTML = `<a href="${url}" class="bg-blue-600 px-8 py-3 rounded-xl font-bold">Download</a>`;
+            document.getElementById('detail-view').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeDetail() { document.getElementById('detail-view').classList.add('hidden'); }
+        function openUrlModal() { document.getElementById('url-modal').classList.remove('hidden'); }
+        function closeUrlModal() { document.getElementById('url-modal').classList.add('hidden'); }
+        function setCategory(cat, btn) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('sidebar-active', 'text-white'));
+            btn.classList.add('sidebar-active', 'text-white');
+            render(cat);
+        }
+
+        // Init
+        const secret = localStorage.getItem('forge_secret') || prompt("Enter Secret Key:");
+        localStorage.setItem('forge_secret', secret);
+        loadFiles();
         lucide.createIcons();
     </script>
 </body>
