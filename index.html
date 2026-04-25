@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forge Drive | Family Cloud</title>
+    <title>Forge Drive | Professional Cloud</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -22,9 +22,7 @@
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <div id="toast-container" class="fixed top-6 right-6 z-[100] flex flex-col gap-3"></div>
-
-    <aside class="w-72 glass h-full flex flex-col p-6">
+    <aside class="w-72 glass h-full flex flex-col p-6 border-r border-white/5">
         <div class="flex items-center gap-3 mb-10 px-2">
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/30">
                 <i data-lucide="folder-key" class="text-white w-6 h-6"></i>
@@ -39,15 +37,11 @@
             </button>
             
             <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mt-8 mb-2">Categories</p>
-            <button onclick="setCategory('video', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition">
-                <i data-lucide="play" class="w-5 h-5"></i> Family Media
-            </button>
-            <button onclick="setCategory('image', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition">
-                <i data-lucide="image" class="w-5 h-5"></i> Images
-            </button>
-            <button onclick="setCategory('document', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition">
-                <i data-lucide="file-text" class="w-5 h-5"></i> Documents
-            </button>
+            <button onclick="setCategory('video', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition"><i data-lucide="play" class="w-5 h-5"></i> Videos</button>
+            <button onclick="setCategory('audio', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition"><i data-lucide="music" class="w-5 h-5"></i> Audio</button>
+            <button onclick="setCategory('image', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition"><i data-lucide="image" class="w-5 h-5"></i> Images</button>
+            <button onclick="setCategory('document', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition"><i data-lucide="file-text" class="w-5 h-5"></i> Documents</button>
+            <button onclick="setCategory('other', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-500 hover:text-white transition"><i data-lucide="more-horizontal" class="w-5 h-5"></i> Other</button>
         </nav>
     </aside>
 
@@ -69,10 +63,10 @@
     <div id="url-modal" class="fixed inset-0 z-[150] flex items-center justify-center hidden p-6">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="closeUrlModal()"></div>
         <div class="glass w-full max-w-md p-8 rounded-[2.5rem] relative animate-card border border-white/10">
-            <h3 class="text-xl font-bold mb-6">Remote Side-load</h3>
+            <h3 class="text-xl font-bold mb-6">Remote Upload</h3>
             <input type="text" id="remote-url-input" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-4 outline-none" placeholder="Direct link...">
             <input type="text" id="remote-name-input" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-6 outline-none" placeholder="Filename...">
-            <button onclick="submitUrlUpload()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold">OK</button>
+            <button onclick="submitUrlUpload()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold">Upload</button>
         </div>
     </div>
 
@@ -83,10 +77,15 @@
     </div>
 
     <script>
-        const workerUrl = 'https://vicksgoli.visdrive.workers.dev';
+        const workerUrl = 'https://vicksgoli.visdrive.workers.dev'; 
         let allFiles = [];
         let currentFilter = 'all';
-        const extMap = { video: ['mp4', 'mkv', 'webm', 'mov'], image: ['jpg', 'jpeg', 'png', 'gif', 'svg'], document: ['pdf', 'doc', 'docx', 'txt', 'zip'] };
+        const extMap = {
+            video: ['mp4', 'mkv', 'webm', 'mov'],
+            audio: ['mp3', 'wav', 'aac', 'flac', 'ogg'],
+            image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'],
+            document: ['pdf', 'doc', 'docx', 'txt', 'zip', 'rar']
+        };
 
         function formatSize(b) {
             const k = 1024, s = ['Bytes','KB','MB','GB'];
@@ -95,21 +94,20 @@
         }
 
         async function loadFiles() {
-            renderSkeletons();
-            const res = await fetch(`${workerUrl}/api/files`, { headers: {'Authorization': `Bearer ${localStorage.getItem('forge_secret')}`} });
-            allFiles = await res.json();
-            render();
+            document.getElementById('file-grid').innerHTML = Array(10).fill(0).map(() => `<div class="glass p-8 rounded-[2.5rem]"><div class="aspect-square skeleton rounded-2xl mb-6"></div><div class="h-4 skeleton w-full rounded"></div></div>`).join('');
+            try {
+                const res = await fetch(`${workerUrl}/api/files`, { headers: {'Authorization': `Bearer ${localStorage.getItem('forge_secret')}`} });
+                allFiles = await res.json();
+                render();
+            } catch (e) { alert("Auth failed"); }
         }
 
-        function renderSkeletons() {
-            document.getElementById('file-grid').innerHTML = Array(5).fill(0).map(() => `<div class="glass p-8 rounded-[2.5rem]"><div class="aspect-square skeleton rounded-2xl mb-6"></div><div class="h-4 skeleton w-full rounded"></div></div>`).join('');
-        }
-
-        function render(filter = currentFilter) {
+        function render(filter = 'all') {
             currentFilter = filter;
             const grid = document.getElementById('file-grid');
             const files = filter === 'all' ? allFiles : allFiles.filter(f => {
                 const ext = f.name.split('.').pop().toLowerCase();
+                if (filter === 'other') return !Object.values(extMap).flat().includes(ext);
                 return extMap[filter].includes(ext);
             });
             grid.innerHTML = files.map((f, i) => `
@@ -124,22 +122,25 @@
         function openFile(name) {
             const url = `${workerUrl}/api/download/${encodeURIComponent(name)}?secret=${localStorage.getItem('forge_secret')}`;
             const area = document.getElementById('preview-area');
-            area.innerHTML = name.match(/\.(mp4|webm)$/i) ? `<video src="${url}" controls class="max-h-[70vh] rounded-2xl"></video>` : `<i data-lucide="file" class="w-32 h-32"></i>`;
+            area.innerHTML = name.match(/\.(mp4|webm)$/i) ? `<video src="${url}" controls class="max-h-[70vh] rounded-2xl"></video>` : `<i data-lucide="file-text" class="w-32 h-32"></i>`;
             document.getElementById('detail-actions').innerHTML = `<a href="${url}" class="bg-blue-600 px-8 py-3 rounded-xl font-bold">Download</a>`;
             document.getElementById('detail-view').classList.remove('hidden');
             lucide.createIcons();
         }
 
-        function closeDetail() { document.getElementById('detail-view').classList.add('hidden'); }
-        function openUrlModal() { document.getElementById('url-modal').classList.remove('hidden'); }
-        function closeUrlModal() { document.getElementById('url-modal').classList.add('hidden'); }
         function setCategory(cat, btn) {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('sidebar-active', 'text-white'));
             btn.classList.add('sidebar-active', 'text-white');
             render(cat);
         }
 
-        // Init
+        async function handleUpload() {
+            const file = document.getElementById('file-upload').files[0];
+            if (!file) return;
+            await fetch(`${workerUrl}/api/upload/${file.name}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${localStorage.getItem('forge_secret')}`, 'Content-Type': file.type }, body: file });
+            loadFiles();
+        }
+
         const secret = localStorage.getItem('forge_secret') || prompt("Enter Secret Key:");
         localStorage.setItem('forge_secret', secret);
         loadFiles();
