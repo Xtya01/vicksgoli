@@ -3,140 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forge Drive</title>
+    <title>Forge Drive | Family Cloud</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { background: #0c0e12; color: #e5e7eb; font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #0c0e12; color: #e5e7eb; overflow-x: hidden; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .sidebar-item:hover { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-in { animation: fadeIn 0.4s ease forwards; }
+        .nav-active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #3b82f6; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 10px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-up { animation: slideUp 0.3s ease forwards; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
+
     <div id="toast-container" class="fixed top-6 right-6 z-[100] flex flex-col gap-3"></div>
 
-    <aside class="w-72 glass h-full hidden md:flex flex-col p-6">
-        <div class="flex items-center gap-3 mb-10">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-                <i data-lucide="folder-key" class="text-white"></i>
+    <aside class="w-72 glass h-full hidden md:flex flex-col p-6 border-r border-white/5">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/40">
+                <i data-lucide="cloud-lightning" class="text-white w-6 h-6"></i>
             </div>
             <h1 class="text-xl font-bold tracking-tight">Forge Drive</h1>
         </div>
-        <nav class="space-y-2 flex-1">
-            <div class="px-4 py-3 rounded-xl sidebar-item cursor-pointer flex items-center gap-3 text-blue-400 bg-blue-500/10">
-                <i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard
-            </div>
-            <div class="px-4 py-3 rounded-xl sidebar-item cursor-pointer flex items-center gap-3 text-gray-400">
-                <i data-lucide="video" class="w-5 h-5"></i> Family Media
+        
+        <nav class="space-y-1 flex-1 overflow-y-auto custom-scrollbar">
+            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-4 mb-3">Library</p>
+            <button onclick="setCategory('all', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-400 hover:bg-white/5 transition nav-active">
+                <i data-lucide="layers" class="w-4 h-4"></i> All Files
+            </button>
+            <button onclick="setCategory('video', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-400 hover:bg-white/5 transition">
+                <i data-lucide="play" class="w-4 h-4"></i> Videos
+            </button>
+            <button onclick="setCategory('image', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-400 hover:bg-white/5 transition">
+                <i data-lucide="image" class="w-4 h-4"></i> Images
+            </button>
+            <button onclick="setCategory('document', this)" class="nav-btn w-full px-4 py-3 rounded-xl flex items-center gap-3 text-gray-400 hover:bg-white/5 transition">
+                <i data-lucide="file-text" class="w-4 h-4"></i> Documents
+            </button>
+
+            <div class="mt-10">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-4 mb-3">Recent Activity</p>
+                <div id="history-list" class="space-y-3 px-2">
+                    </div>
             </div>
         </nav>
-        <div class="glass p-4 rounded-2xl text-[10px] text-gray-500">Storage Backend: IA S3-v4</div>
+        
+        <div class="mt-4 pt-4 border-t border-white/5 text-[10px] text-gray-600 flex justify-between">
+            <span>v4.1 Stable</span>
+            <span>IA S3-v4 Backend</span>
+        </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0">
+    <main class="flex-1 flex flex-col min-w-0 bg-[#0c0e12]">
         <header class="h-20 flex items-center justify-between px-8 border-b border-white/5">
-            <h2 class="text-lg font-medium text-gray-300">Shared Files</h2>
+            <h2 id="view-title" class="text-lg font-medium text-gray-300">All Files</h2>
             <div class="flex items-center gap-4">
                 <input type="file" id="file-upload" class="hidden" onchange="handleUpload()">
-                <button onclick="document.getElementById('file-upload').click()" class="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-semibold transition shadow-lg shadow-blue-900/20">
-                    <i data-lucide="plus" class="w-4 h-4"></i> Upload File
+                <button onclick="document.getElementById('file-upload').click()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2.5 rounded-xl flex items-center gap-2 text-sm font-semibold transition shadow-lg shadow-blue-600/20">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Upload
                 </button>
             </div>
         </header>
 
-        <section class="flex-1 overflow-y-auto p-8">
-            <div id="file-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"></div>
+        <section class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div id="file-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                </div>
         </section>
     </main>
 
-    <div id="detail-overlay" class="fixed inset-0 z-50 glass hidden flex flex-col animate-in">
+    <div id="detail-view" class="fixed inset-0 z-50 glass hidden flex flex-col animate-up">
         <div class="p-6 border-b border-white/5 flex justify-between items-center">
-            <button onclick="closeDetail()" class="flex items-center gap-2 text-gray-400 hover:text-white"><i data-lucide="chevron-left"></i> Back</button>
-            <div id="action-bar"></div>
+            <button onclick="closeDetail()" class="flex items-center gap-2 text-gray-400 hover:text-white transition">
+                <i data-lucide="chevron-left"></i> Back to Drive
+            </button>
+            <div id="detail-actions"></div>
         </div>
         <div class="flex-1 flex flex-col items-center justify-center p-12" id="preview-area"></div>
     </div>
 
     <div id="auth-screen" class="fixed inset-0 z-[200] bg-[#0c0e12] flex items-center justify-center p-6">
-        <div class="glass p-10 rounded-[2rem] w-full max-w-md text-center">
-            <h2 class="text-2xl font-bold mb-6">Family Cloud Access</h2>
-            <input type="password" id="pass-input" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-4 focus:border-blue-500 outline-none transition" placeholder="Enter Secret Key">
-            <button onclick="doAuth()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold">Connect Drive</button>
+        <div class="glass p-10 rounded-[2.5rem] w-full max-w-md text-center border border-white/10 shadow-2xl">
+            <div class="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="shield-check" class="w-8 h-8 text-blue-500"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Family Access</h2>
+            <p class="text-gray-500 text-sm mb-8">Enter your secret key to connect to Forge Drive.</p>
+            <input type="password" id="auth-input" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-4 focus:border-blue-500 outline-none transition text-center" placeholder="••••••••">
+            <button onclick="authenticate()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold hover:bg-blue-700 transition">Enter Drive</button>
         </div>
     </div>
 
     <script>
         const workerUrl = 'https://vicksgoli.visdrive.workers.dev'; // UPDATE THIS
-        let filesList = [];
+        let allFiles = [];
+        let currentFilter = 'all';
 
+        const extMap = {
+            video: ['mp4', 'mkv', 'webm', 'mov'],
+            image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'],
+            document: ['pdf', 'doc', 'docx', 'txt', 'xls', 'zip', 'rar']
+        };
+
+        // --- Core UI ---
         function toast(msg, type='info') {
-            const c = document.getElementById('toast-container');
+            const container = document.getElementById('toast-container');
             const t = document.createElement('div');
-            t.className = `p-4 rounded-xl glass border ${type==='error'?'border-red-500/50 text-red-400':'border-blue-500/50 text-blue-400'} shadow-2xl animate-in`;
+            const theme = type === 'error' ? 'border-red-500/50 text-red-400' : 'border-blue-500/50 text-blue-400';
+            t.className = `px-6 py-4 rounded-2xl glass border ${theme} shadow-2xl animate-up min-w-[280px]`;
             t.innerText = msg;
-            c.appendChild(t);
+            container.appendChild(t);
             setTimeout(() => t.remove(), 4000);
         }
 
+        function setCategory(cat, btn) {
+            currentFilter = cat;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
+            btn.classList.add('nav-active');
+            document.getElementById('view-title').innerText = cat.charAt(0).toUpperCase() + cat.slice(1) + " Files";
+            render();
+        }
+
+        // --- Data Logic ---
         async function loadFiles() {
-            const secret = localStorage.getItem('family_key');
+            const secret = localStorage.getItem('forge_secret');
             try {
                 const res = await fetch(`${workerUrl}/api/files`, { headers: {'Authorization': `Bearer ${secret}`} });
-                if (res.status === 401) throw 'auth';
-                filesList = await res.json();
+                if (res.status === 401) throw 'unauthorized';
+                allFiles = await res.json();
                 render();
-            } catch (e) { document.getElementById('auth-screen').classList.remove('hidden'); }
+                renderHistory();
+            } catch (e) {
+                document.getElementById('auth-screen').classList.remove('hidden');
+            }
         }
 
         function render() {
             const grid = document.getElementById('file-grid');
-            grid.innerHTML = filesList.map((f, i) => `
-                <div onclick="openFile(${i})" class="glass group p-5 rounded-[2rem] cursor-pointer hover:bg-white/5 transition-all duration-300 border-transparent hover:border-blue-500/30">
+            const filtered = allFiles.filter(f => {
+                if (currentFilter === 'all') return true;
+                const ext = f.name.split('.').pop().toLowerCase();
+                return extMap[currentFilter].includes(ext);
+            });
+
+            grid.innerHTML = filtered.map((f, i) => {
+                const ext = f.name.split('.').pop().toLowerCase();
+                let icon = 'file';
+                if (extMap.video.includes(ext)) icon = 'play-circle';
+                else if (extMap.image.includes(ext)) icon = 'image';
+                else if (extMap.document.includes(ext)) icon = 'file-text';
+
+                return `
+                <div onclick="openFile('${f.name}')" class="glass group p-5 rounded-[2rem] cursor-pointer hover:bg-white/5 transition-all border border-transparent hover:border-blue-500/30 animate-up">
                     <div class="aspect-square mb-4 rounded-2xl bg-white/5 flex items-center justify-center">
-                        <i data-lucide="${f.name.match(/\.(mp4|mkv|webm)$/i)?'play-circle':'file'}" class="w-12 h-12 text-gray-600 group-hover:text-blue-500"></i>
+                        <i data-lucide="${icon}" class="w-10 h-10 text-gray-600 group-hover:text-blue-500 transition-colors"></i>
                     </div>
                     <p class="text-sm font-medium truncate text-gray-200">${f.name}</p>
                     <p class="text-[10px] text-gray-500 mt-1 uppercase">${(f.size/(1024*1024)).toFixed(2)} MB</p>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
             lucide.createIcons();
         }
 
-        function openFile(idx) {
-            const f = filesList[idx];
-            const url = `${workerUrl}/api/download/${f.name}?secret=${localStorage.getItem('family_key')}`;
-            const preview = document.getElementById('preview-area');
-            const overlay = document.getElementById('detail-overlay');
-            
-            if (f.name.match(/\.(mp4|webm|mkv)$/i)) {
-                preview.innerHTML = `<video src="${url}" controls class="max-h-full max-w-full rounded-2xl shadow-2xl"></video>`;
-            } else {
-                preview.innerHTML = `<div class="text-center"><i data-lucide="file" class="w-24 h-24 mb-4 text-gray-700"></i><p>${f.name}</p></div>`;
-            }
-            
-            document.getElementById('action-bar').innerHTML = `<button onclick="window.open('${url}')" class="bg-blue-600 px-6 py-2 rounded-xl text-sm font-bold">Download Now</button>`;
-            overlay.classList.remove('hidden');
-            lucide.createIcons();
+        // --- History & Actions ---
+        function addToHistory(name) {
+            let history = JSON.parse(localStorage.getItem('forge_history') || '[]');
+            history.unshift({ name, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+            localStorage.setItem('forge_history', JSON.stringify(history.slice(0, 5)));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem('forge_history') || '[]');
+            list.innerHTML = history.length ? history.map(h => `
+                <div class="pl-4 py-1 border-l-2 border-white/5">
+                    <p class="text-[11px] text-gray-300 truncate">${h.name}</p>
+                    <p class="text-[9px] text-gray-600 uppercase font-bold">${h.time}</p>
+                </div>
+            `).join('') : '<p class="text-[10px] text-gray-600 ml-4 italic">No recent uploads</p>';
         }
 
         async function handleUpload() {
-            const file = document.getElementById('file-upload').files[0];
+            const input = document.getElementById('file-upload');
+            const file = input.files[0];
             if (!file) return;
+
             toast(`Uploading ${file.name}...`);
-            const res = await fetch(`${workerUrl}/api/upload/${file.name}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('family_key')}`, 'Content-Type': file.type },
-                body: file
-            });
-            if (res.ok) { toast('Upload complete!', 'success'); loadFiles(); }
-            else toast('Upload failed', 'error');
+            const secret = localStorage.getItem('forge_secret');
+            
+            try {
+                const res = await fetch(`${workerUrl}/api/upload/${file.name}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${secret}`, 'Content-Type': file.type },
+                    body: file
+                });
+
+                if (res.ok) {
+                    toast('Upload successful!', 'success');
+                    addToHistory(file.name);
+                    loadFiles();
+                } else throw 'fail';
+            } catch (e) { toast('Upload failed. Check secret.', 'error'); }
         }
 
-        function closeDetail() { document.getElementById('detail-overlay').classList.add('hidden'); document.getElementById('preview-area').innerHTML = ''; }
-        function doAuth() { localStorage.setItem('family_key', document.getElementById('pass-input').value); document.getElementById('auth-screen').classList.add('hidden'); loadFiles(); }
-        if (localStorage.getItem('family_key')) { document.getElementById('auth-screen').classList.add('hidden'); loadFiles(); }
+        function openFile(name) {
+            const secret = localStorage.getItem('forge_secret');
+            const url = `${workerUrl}/api/download/${name}?secret=${secret}`;
+            const preview = document.getElementById('preview-area');
+            const isVideo = name.match(/\.(mp4|webm|mkv)$/i);
+            
+            if (isVideo) {
+                preview.innerHTML = `<video src="${url}" controls class="max-h-[70vh] rounded-2xl shadow-2xl border border-white/10"></video>`;
+            } else {
+                preview.innerHTML = `<div class="text-center"><i data-lucide="file" class="w-32 h-32 mb-6 text-gray-700"></i><p class="text-xl font-bold">${name}</p></div>`;
+            }
+
+            document.getElementById('detail-actions').innerHTML = `
+                <button onclick="window.open('${url}')" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4"></i> Download
+                </button>
+            `;
+            document.getElementById('detail-view').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeDetail() { document.getElementById('detail-view').classList.add('hidden'); document.getElementById('preview-area').innerHTML = ''; }
+        function authenticate() { localStorage.setItem('forge_secret', document.getElementById('auth-input').value); document.getElementById('auth-screen').classList.add('hidden'); loadFiles(); }
+
+        // Start
+        if (localStorage.getItem('forge_secret')) {
+            document.getElementById('auth-screen').classList.add('hidden');
+            loadFiles();
+        }
         lucide.createIcons();
     </script>
 </body>
